@@ -19,5 +19,23 @@ namespace ExpressionTest
             };
             Assert.Equal(1, expression.Evaluate());
         }
+
+        [Fact(DisplayName = "FunctionAsParameter")]
+        public void FunctionAsParameter()
+        {
+            var expression = new Expression("array(parameters('objectToConvert'))");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "array")
+                {
+                    args.Result = args.Parameters[0].Evaluate(null);
+                }
+                if (name == "parameters")
+                {
+                    args.Result = args.Parameters[0].Evaluate(null);
+                }
+            };
+            Assert.Equal("objectToConvert", expression.Evaluate());
+        }
     }
 }

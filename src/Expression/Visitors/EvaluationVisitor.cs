@@ -226,6 +226,7 @@ namespace maskx.Expression.Visitors
                 args.Parameters[i] = new Expression(function.Expressions[i], _options);
                 // Assign the parameters of the Expression to the arguments so that custom Functions and Parameters can use them
                 args.Parameters[i].Parameters = Parameters;
+                args.Parameters[i].EvaluateFunction = EvaluateFunction;
             }
 
             if (EvaluateFunction != null)

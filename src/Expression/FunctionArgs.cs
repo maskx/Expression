@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace maskx.Expression
 {
@@ -26,12 +27,12 @@ namespace maskx.Expression
             set { parameters = value; }
         }
 
-        public object[] EvaluateParameters()
+        public object[] EvaluateParameters(Dictionary<string, object> context)
         {
             var values = new object[parameters.Length];
             for (int i = 0; i < values.Length; i++)
             {
-                values[i] = parameters[i].Evaluate();
+                values[i] = parameters[i].Evaluate(context);
             }
 
             return values;
