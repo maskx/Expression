@@ -256,7 +256,7 @@ namespace maskx.Expression.Visitors
         public override void Visit(MemberExpression expression, Dictionary<string, object> context = null)
         {
             // Evaluates the left expression and saves the value
-            expression.LeftExpression.Accept(this);
+            expression.LeftExpression.Accept(this, context);
             var obj = this.Result;
             var objType = obj.GetType();
             if (expression.rightExpression is FunctionExpression right)
