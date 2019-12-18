@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Dynamic;
 using maskx.Expression;
 using Xunit;
 
@@ -47,6 +48,54 @@ namespace ExpressionTest
                 }
             };
             Assert.Equal(DateTime.Now.Date.AddYears(1).Year, expression.Evaluate());
+        }
+
+        [Fact(DisplayName = "DynamicObjectProperty")]
+        public void DynamicObjectProperty()
+        {
+            var expression = new Expression("GetDynamicObject().Year");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "GetDynamicObject")
+                {
+                    args.Result = new MyDynamicObject();
+                }
+            };
+            Assert.Equal("Year", expression.Evaluate());
+        }
+
+        //[Fact(DisplayName = "DynamicObjectMethod")]
+        //public void DynamicObjectMethod()
+        //{
+        //    var expression = new Expression("GetDynamicObject().Method(1,2)");
+        //    expression.EvaluateFunction = (name, args, cxt) =>
+        //    {
+        //        if (name == "GetDynamicObject")
+        //        {
+        //            args.Result = new MyDynamicObject();
+        //        }
+        //    };
+        //    Assert.Equal("Year", expression.Evaluate());
+        //}
+
+        public class MyDynamicObject : DynamicObject
+        {
+            public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+            {
+                result = $"{binder.Name}:{string.Join(",", args)}";
+                return true;
+            }
+
+            public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
+            {
+                return base.TryGetIndex(binder, indexes, out result);
+            }
+
+            public override bool TryGetMember(GetMemberBinder binder, out object result)
+            {
+                result = binder.Name;
+                return true;
+            }
         }
     }
 }

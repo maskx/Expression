@@ -1,8 +1,12 @@
 ﻿using maskx.Expression.Expressions;
+using Microsoft.CSharp.RuntimeBinder;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace maskx.Expression.Visitors
 {
@@ -253,40 +257,71 @@ namespace maskx.Expression.Visitors
         {
             // Evaluates the left expression and saves the value
             expression.LeftExpression.Accept(this);
-            var name = this.Result;
+            var obj = this.Result;
+            var objType = obj.GetType();
             if (expression.rightExpression is FunctionExpression right)
             {
                 List<object> pars = new List<object>();
+                List<Type> parTypes = new List<Type>();
                 foreach (var item in right.Expressions)
                 {
                     item.Accept(this);
                     pars.Add(this.Result);
+                    parTypes.Add(this.Result.GetType());
                 }
-                MethodInfo mInfo = null;
-                foreach (var method in name.GetType().GetMethods())
+                if (objType.IsSubclassOf(typeof(DynamicObject)))
                 {
-                    if (method.Name != right.Identifier.Name)
-                        continue;
-                    var p = method.GetParameters();
-                    if (p.Length != pars.Count)
-                        continue;
-                    mInfo = method;
-                    break;
+                    // TODO： Support invoke DynamicObject's method
+                    //var callSiteBinder = Microsoft.CSharp.RuntimeBinder.Binder.InvokeMember(
+                    //    CSharpBinderFlags.None,
+                    //    right.Identifier.Name,
+                    //    parTypes,
+                    //    objType,
+                    //     new[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) });
+                    //var callSite = CallSite<Func<CallSite, object, object, object, object>>.Create(callSiteBinder);
+                    //Result = callSite.Target(callSite, obj, 1, 2);
                 }
-                if (mInfo == null)
-                    throw new Exception(string.Format("Cannot find matched method {0} with parameters:{1}",
-                        name,
-                        pars.Count
-                        ));
-                if (pars.Count > 0)
-
-                    Result = mInfo.Invoke(name, pars.ToArray());
                 else
-                    Result = mInfo.Invoke(name, null);
+                {
+                    MethodInfo mInfo = null;
+                    foreach (var method in objType.GetMethods())
+                    {
+                        if (method.Name != right.Identifier.Name)
+                            continue;
+                        var p = method.GetParameters();
+                        if (p.Length != pars.Count)
+                            continue;
+                        mInfo = method;
+                        break;
+                    }
+                    if (mInfo == null)
+                        throw new Exception(string.Format("Cannot find matched method {0} with parameters:{1}",
+                            right.Identifier.Name,
+                            pars.Count
+                            ));
+                    if (pars.Count > 0)
+
+                        Result = mInfo.Invoke(obj, pars.ToArray());
+                    else
+                        Result = mInfo.Invoke(obj, null);
+                }
             }
             if (expression.rightExpression is IdentifierExpression id)
             {
-                Result = name.GetType().GetProperty(id.Name).GetValue(name);
+                if (objType.IsSubclassOf(typeof(DynamicObject)))
+                {
+                    var callSiteBinder = Microsoft.CSharp.RuntimeBinder.Binder.GetMember(
+                        CSharpBinderFlags.None,
+                        id.Name,
+                         objType,
+                         new[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) });
+                    var callSite = CallSite<Func<CallSite, object, object>>.Create(callSiteBinder);
+                    Result = callSite.Target(callSite, obj);
+                }
+                else
+                {
+                    Result = objType.GetProperty(id.Name).GetValue(obj);
+                }
             }
         }
     }
