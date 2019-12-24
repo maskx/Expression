@@ -112,11 +112,6 @@ namespace ExpressionTest
             Assert.Equal(DateTime.Now.Date.AddDays(1).ToString(), expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
         }
 
-        private class dd
-        {
-            public string bb { get; set; }
-        }
-
         [Fact(DisplayName = "SupportStaticFunction")]
         public void SupportStaticFunction()
         {
@@ -154,6 +149,20 @@ namespace ExpressionTest
                 return null;
             };
             Assert.Equal(System.DateTime.Now.Year, expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
+        }
+
+        [Fact(DisplayName = "SupportFunctionWithNamespace")]
+        public void SupportFunctionWithNamespace()
+        {
+            var expression = new Expression("NS1.Method1()");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "NS1.Method1")
+                {
+                    args.Result = 1;
+                }
+            };
+            Assert.Equal(1, expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
         }
     }
 }

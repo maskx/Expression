@@ -8,7 +8,7 @@
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/maskx/Expression</PackageProjectUrl>
     <RepositoryUrl>https://github.com/maskx/Expression</RepositoryUrl>
-    <Version>0.0.5</Version>
+    <Version>0.0.6</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 

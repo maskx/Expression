@@ -234,7 +234,12 @@ namespace maskx.Expression.Visitors
             }
 
             if (EvaluateFunction != null)
-                EvaluateFunction(function.Identifier.Name, args, context);
+            {
+                if (string.IsNullOrEmpty(function.Namespace))
+                    EvaluateFunction(function.Identifier.Name, args, context);
+                else
+                    EvaluateFunction($"{function.Namespace}.{function.Identifier.Name}", args, context);
+            }
 
             // If an external implementation was found get the result back
             if (args.HasResult)
@@ -338,6 +343,11 @@ namespace maskx.Expression.Visitors
                         this.Result = ns;
                         expression.IsNamespace = true;
                     }
+                }
+                else if (expression.rightExpression is FunctionExpression func)
+                {
+                    func.Namespace = this.Result.ToString();
+                    func.Accept(this, context);
                 }
                 else
                 {

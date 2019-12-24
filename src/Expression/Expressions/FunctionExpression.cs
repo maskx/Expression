@@ -11,6 +11,7 @@ namespace maskx.Expression.Expressions
             Expressions = expressions;
         }
 
+        public string Namespace { get; set; }
         public IdentifierExpression Identifier { get; set; }
 
         public LogicalExpression[] Expressions { get; set; }
