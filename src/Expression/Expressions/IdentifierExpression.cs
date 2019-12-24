@@ -10,6 +10,7 @@ namespace maskx.Expression.Expressions
             Name = name;
         }
 
+        public bool IsNamespace { get; set; }
         public string Name { get; set; }
 
         public override void Accept(LogicalExpressionVisitor visitor, Dictionary<string, object> context = null)

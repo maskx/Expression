@@ -29,6 +29,8 @@ access object's property or invoke the method of an object
 
 pass context to custom functions
 
+## support namespace
+
 ### support custom functions without parameters
 
 ## TODO

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Dynamic;
 using maskx.Expression;
 using Xunit;
@@ -96,6 +97,37 @@ namespace ExpressionTest
                 result = binder.Name;
                 return true;
             }
+        }
+
+        [Fact(DisplayName = "SouldSupportNamespce")]
+        public void SouldSupportNamespce()
+        {
+            var expression = new Expression("N1.N2.DateNow.Date.AddDays(1).ToString()");
+            expression.TryGetObject = (name) =>
+              {
+                  if (name == "N1.N2.DateNow")
+                      return DateTime.Now;
+                  return null;
+              };
+            Assert.Equal(DateTime.Now.Date.AddDays(1).ToString(), expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
+        }
+
+        [Fact(DisplayName = "SupportStaticFunction")]
+        public void SupportStaticFunction()
+        {
+            var expression = new Expression("System.Math.Abs(-1)");
+            expression.TryGetObject = (name) =>
+            {
+                if (name == "System.Math")
+                    return typeof(System.Math);
+                return null;
+            };
+            Assert.Equal(DateTime.Now.Date.AddDays(1).ToString(), expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
+        }
+
+        [Fact(DisplayName = "SupportStaticProperty")]
+        public void SupportStaticProperty()
+        {
         }
     }
 }

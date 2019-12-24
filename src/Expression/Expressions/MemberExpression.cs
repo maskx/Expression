@@ -14,6 +14,8 @@ namespace maskx.Expression.Expressions
             this.rightExpression = right;
         }
 
+        public bool IsNamespace { get; set; }
+
         public override void Accept(LogicalExpressionVisitor visitor, Dictionary<string, object> context = null)
         {
             visitor.Visit(this, context);

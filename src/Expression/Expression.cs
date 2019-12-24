@@ -203,8 +203,10 @@ namespace maskx.Expression
             }
 
             var visitor = new EvaluationVisitor(Options);
-            visitor.EvaluateFunction = EvaluateFunction;
-            visitor.Parameters = Parameters;
+            visitor.EvaluateFunction = this.EvaluateFunction;
+            visitor.Parameters = this.Parameters;
+            visitor.TryGetType = this.TryGetType;
+            visitor.TryGetObject = this.TryGetObject;
 
             // if array evaluation, execute the same expression multiple times
             if ((Options & EvaluateOptions.IterateParameters) == EvaluateOptions.IterateParameters)
@@ -270,6 +272,8 @@ namespace maskx.Expression
         }
 
         public Action<string, FunctionArgs, Dictionary<string, object>> EvaluateFunction;
+        public Func<string, object> TryGetObject;
+        public Func<string, Type> TryGetType;
 
         private Dictionary<string, object> _parameters;
 
