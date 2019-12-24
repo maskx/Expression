@@ -347,10 +347,15 @@ namespace maskx.Expression.Visitors
             else
             {
                 object obj = this.Result;
-                Type objType = null;
-
-                obj = this.Result;
-                objType = obj.GetType();
+                Type objType = this.Result as Type;
+                if (objType == null)
+                {
+                    objType = obj.GetType();
+                }
+                else
+                {
+                    obj = null;
+                }
                 if (expression.rightExpression is FunctionExpression right)
                 {
                     List<object> pars = new List<object>();
@@ -412,7 +417,15 @@ namespace maskx.Expression.Visitors
                     }
                     else
                     {
-                        Result = objType.GetProperty(id.Name).GetValue(obj);
+                        var property = objType.GetProperty(id.Name);
+                        if (property != null)
+                            Result = property.GetValue(obj);
+                        else
+                        {
+                            var field = objType.GetField(id.Name);
+                            if (field != null)
+                                Result = field.GetValue(obj);
+                        }
                     }
                 }
             }

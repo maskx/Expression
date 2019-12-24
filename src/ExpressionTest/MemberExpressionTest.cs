@@ -112,6 +112,11 @@ namespace ExpressionTest
             Assert.Equal(DateTime.Now.Date.AddDays(1).ToString(), expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
         }
 
+        private class dd
+        {
+            public string bb { get; set; }
+        }
+
         [Fact(DisplayName = "SupportStaticFunction")]
         public void SupportStaticFunction()
         {
@@ -122,12 +127,33 @@ namespace ExpressionTest
                     return typeof(System.Math);
                 return null;
             };
-            Assert.Equal(DateTime.Now.Date.AddDays(1).ToString(), expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
+            Assert.Equal(1d, expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
+        }
+
+        [Fact(DisplayName = "SupportStaticField")]
+        public void SupportStaticField()
+        {
+            var expression = new Expression("System.Math.PI");
+            expression.TryGetObject = (name) =>
+            {
+                if (name == "System.Math")
+                    return typeof(System.Math);
+                return null;
+            };
+            Assert.Equal(System.Math.PI, expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
         }
 
         [Fact(DisplayName = "SupportStaticProperty")]
         public void SupportStaticProperty()
         {
+            var expression = new Expression("System.DateTime.Now.Year");
+            expression.TryGetObject = (name) =>
+            {
+                if (name == "System.DateTime")
+                    return typeof(System.DateTime);
+                return null;
+            };
+            Assert.Equal(System.DateTime.Now.Year, expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
         }
     }
 }
