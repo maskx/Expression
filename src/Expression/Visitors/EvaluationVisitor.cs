@@ -4,7 +4,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -13,13 +12,16 @@ namespace maskx.Expression.Visitors
     public class EvaluationVisitor : LogicalExpressionVisitor
     {
         private readonly EvaluateOptions _options = EvaluateOptions.None;
+        public Action<string, FunctionArgs, Dictionary<string, object>> EvaluateFunction;
+        public Func<string, object> TryGetObject;
+        public Func<string, Type> TryGetType;
+        public Dictionary<string, object> Parameters { get; set; }
+        public object Result { get; private set; }
 
         public EvaluationVisitor(EvaluateOptions options)
         {
             _options = options;
         }
-
-        public object Result { get; private set; }
 
         private object Evaluate(LogicalExpression expression)
         {
@@ -231,6 +233,8 @@ namespace maskx.Expression.Visitors
                 // Assign the parameters of the Expression to the arguments so that custom Functions and Parameters can use them
                 args.Parameters[i].Parameters = Parameters;
                 args.Parameters[i].EvaluateFunction = EvaluateFunction;
+                // to support inherit must set EvaluationVisitor = this
+                args.Parameters[i].EvaluationVisitor = this;
             }
 
             if (EvaluateFunction != null)
@@ -249,10 +253,6 @@ namespace maskx.Expression.Visitors
             }
         }
 
-        public Action<string, FunctionArgs, Dictionary<string, object>> EvaluateFunction;
-        public Func<string, object> TryGetObject;
-        public Func<string, Type> TryGetType;
-
         public override void Visit(IdentifierExpression identifierExpression)
         {
             if (GetObjectOrType(identifierExpression.Name, out object o))
@@ -262,65 +262,6 @@ namespace maskx.Expression.Visitors
             }
             this.Result = identifierExpression.Name;
             identifierExpression.IsNamespace = true;
-        }
-
-        public Dictionary<string, object> Parameters { get; set; }
-
-        private bool GetObjectOrType(string uri, out object result)
-        {
-            if (this.TryGetObject != null)
-            {
-                var objTemp = this.TryGetObject(uri);
-                if (objTemp != null)
-                {
-                    result = objTemp;
-                    return true;
-                }
-            }
-            if (this.TryGetType != null)
-            {
-                var typeTemp = this.TryGetType(uri);
-                if (typeTemp != null)
-                {
-                    result = typeTemp;
-                    return true;
-                }
-            }
-            result = null;
-            return false;
-        }
-
-        private bool GetObjectOrType(string baseUri, MemberExpression memberExpression, out object result, out MemberExpression resultMemeberExpression)
-        {
-            string uri = baseUri;
-            if (memberExpression.LeftExpression is IdentifierExpression identifierExpression)
-            {
-                uri = identifierExpression.Name;
-                if (!string.IsNullOrEmpty(baseUri))
-                    uri = baseUri + "." + uri;
-                if (GetObjectOrType(uri, out result))
-                {
-                    resultMemeberExpression = memberExpression;
-                    return true;
-                }
-                if (memberExpression.rightExpression is IdentifierExpression identifier)
-                {
-                    uri = uri + "." + identifier.Name;
-                    if (GetObjectOrType(uri, out result))
-                    {
-                        resultMemeberExpression = memberExpression;
-                        return true;
-                    }
-                }
-            }
-            else if (memberExpression.LeftExpression is MemberExpression m)
-            {
-                return GetObjectOrType(baseUri, m, out result, out resultMemeberExpression);
-            }
-
-            result = null;
-            resultMemeberExpression = null;
-            return false;
         }
 
         public override void Visit(MemberExpression expression, Dictionary<string, object> context = null)
@@ -439,6 +380,63 @@ namespace maskx.Expression.Visitors
                     }
                 }
             }
+        }
+
+        private bool GetObjectOrType(string uri, out object result)
+        {
+            if (this.TryGetObject != null)
+            {
+                var objTemp = this.TryGetObject(uri);
+                if (objTemp != null)
+                {
+                    result = objTemp;
+                    return true;
+                }
+            }
+            if (this.TryGetType != null)
+            {
+                var typeTemp = this.TryGetType(uri);
+                if (typeTemp != null)
+                {
+                    result = typeTemp;
+                    return true;
+                }
+            }
+            result = null;
+            return false;
+        }
+
+        private bool GetObjectOrType(string baseUri, MemberExpression memberExpression, out object result, out MemberExpression resultMemeberExpression)
+        {
+            string uri = baseUri;
+            if (memberExpression.LeftExpression is IdentifierExpression identifierExpression)
+            {
+                uri = identifierExpression.Name;
+                if (!string.IsNullOrEmpty(baseUri))
+                    uri = baseUri + "." + uri;
+                if (GetObjectOrType(uri, out result))
+                {
+                    resultMemeberExpression = memberExpression;
+                    return true;
+                }
+                if (memberExpression.rightExpression is IdentifierExpression identifier)
+                {
+                    uri = uri + "." + identifier.Name;
+                    if (GetObjectOrType(uri, out result))
+                    {
+                        resultMemeberExpression = memberExpression;
+                        return true;
+                    }
+                }
+            }
+            else if (memberExpression.LeftExpression is MemberExpression m)
+            {
+                return GetObjectOrType(baseUri, m, out result, out resultMemeberExpression);
+            }
+
+            result = null;
+            resultMemeberExpression = null;
+            return false;
         }
     }
 }

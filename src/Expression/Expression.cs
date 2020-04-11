@@ -40,7 +40,7 @@ namespace maskx.Expression
                 throw new
                     ArgumentException("Expression can't be null", "expression");
 
-            ParsedExpression = expression;
+            _ParsedExpression = expression;
             Options = options;
         }
 
@@ -168,9 +168,9 @@ namespace maskx.Expression
         {
             try
             {
-                if (ParsedExpression == null)
+                if (_ParsedExpression == null)
                 {
-                    ParsedExpression = Compile(OriginalExpression, (Options & EvaluateOptions.NoCache) == EvaluateOptions.NoCache);
+                    _ParsedExpression = Compile(OriginalExpression, (Options & EvaluateOptions.NoCache) == EvaluateOptions.NoCache);
                 }
 
                 // In case HasErrors() is called multiple times for the same expression
@@ -184,30 +184,50 @@ namespace maskx.Expression
         }
 
         public string Error { get; private set; }
+        private LogicalExpression _ParsedExpression;
 
-        public LogicalExpression ParsedExpression { get; private set; }
+        public LogicalExpression ParsedExpression
+        {
+            get
+            {
+                if (_ParsedExpression == null)
+                {
+                    if (HasErrors())
+                    {
+                        throw new EvaluationException(Error);
+                    }
+                }
+                return _ParsedExpression;
+            }
+        }
+
+        private EvaluationVisitor _EvaluationVisitor;
+
+        public EvaluationVisitor EvaluationVisitor
+        {
+            get
+            {
+                if (_EvaluationVisitor == null)
+                {
+                    _EvaluationVisitor = new EvaluationVisitor(Options);
+                    _EvaluationVisitor.EvaluateFunction = this.EvaluateFunction;
+                    _EvaluationVisitor.Parameters = this.Parameters;
+                    _EvaluationVisitor.TryGetType = this.TryGetType;
+                    _EvaluationVisitor.TryGetObject = this.TryGetObject;
+                }
+                return _EvaluationVisitor;
+            }
+            set
+            {
+                _EvaluationVisitor = value;
+            }
+        }
 
         protected Dictionary<string, IEnumerator> ParameterEnumerators;
         protected Dictionary<string, object> ParametersBackup;
 
         public object Evaluate(Dictionary<string, object> context = null)
         {
-            if (HasErrors())
-            {
-                throw new EvaluationException(Error);
-            }
-
-            if (ParsedExpression == null)
-            {
-                ParsedExpression = Compile(OriginalExpression, (Options & EvaluateOptions.NoCache) == EvaluateOptions.NoCache);
-            }
-
-            var visitor = new EvaluationVisitor(Options);
-            visitor.EvaluateFunction = this.EvaluateFunction;
-            visitor.Parameters = this.Parameters;
-            visitor.TryGetType = this.TryGetType;
-            visitor.TryGetObject = this.TryGetObject;
-
             // if array evaluation, execute the same expression multiple times
             if ((Options & EvaluateOptions.IterateParameters) == EvaluateOptions.IterateParameters)
             {
@@ -260,20 +280,20 @@ namespace maskx.Expression
                         Parameters[key] = enumerator.Current;
                     }
 
-                    ParsedExpression.Accept(visitor);
-                    results.Add(visitor.Result);
+                    ParsedExpression.Accept(EvaluationVisitor);
+                    results.Add(EvaluationVisitor.Result);
                 }
 
                 return results;
             }
 
-            ParsedExpression.Accept(visitor, context);
-            return visitor.Result;
+            ParsedExpression.Accept(EvaluationVisitor, context);
+            return EvaluationVisitor.Result;
         }
 
-        public Action<string, FunctionArgs, Dictionary<string, object>> EvaluateFunction;
-        public Func<string, object> TryGetObject;
-        public Func<string, Type> TryGetType;
+        public Action<string, FunctionArgs, Dictionary<string, object>> EvaluateFunction { get; set; }
+        public Func<string, object> TryGetObject { get; set; }
+        public Func<string, Type> TryGetType { get; set; }
 
         private Dictionary<string, object> _parameters;
 
