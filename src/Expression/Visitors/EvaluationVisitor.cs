@@ -23,12 +23,6 @@ namespace maskx.Expression.Visitors
             _options = options;
         }
 
-        private object Evaluate(LogicalExpression expression)
-        {
-            expression.Accept(this);
-            return Result;
-        }
-
         /// <summary>
         /// Gets the the most precise type.
         /// </summary>
@@ -54,26 +48,26 @@ namespace maskx.Expression.Visitors
             return Comparer.Default.Compare(Convert.ChangeType(a, mpt), Convert.ChangeType(b, mpt));
         }
 
-        public override void Visit(TernaryExpression expression)
+        public override void Visit(TernaryExpression expression, Dictionary<string, object> context = null)
         {
             // Evaluates the left expression and saves the value
-            expression.LeftExpression.Accept(this);
+            expression.LeftExpression.Accept(this,context);
             bool left = Convert.ToBoolean(Result);
 
             if (left)
             {
-                expression.MiddleExpression.Accept(this);
+                expression.MiddleExpression.Accept(this,context);
             }
             else
             {
-                expression.RightExpression.Accept(this);
+                expression.RightExpression.Accept(this,context);
             }
         }
 
-        public override void Visit(BinaryExpression expression)
+        public override void Visit(BinaryExpression expression, Dictionary<string, object> context = null)
         {
             // Evaluates the left expression and saves the value
-            expression.LeftExpression.Accept(this);
+            expression.LeftExpression.Accept(this,context);
             dynamic left = Result;
 
             if (expression.Type == BinaryExpressionType.And && !left)
@@ -89,7 +83,7 @@ namespace maskx.Expression.Visitors
             }
 
             // Evaluates the right expression and saves the value
-            expression.RightExpression.Accept(this);
+            expression.RightExpression.Accept(this,context);
             dynamic right = Result;
             try
             {
@@ -191,10 +185,10 @@ namespace maskx.Expression.Visitors
             }
         }
 
-        public override void Visit(UnaryExpression expression)
+        public override void Visit(UnaryExpression expression, Dictionary<string, object> context = null)
         {
             // Recursively evaluates the underlying expression
-            expression.Expression.Accept(this);
+            expression.Expression.Accept(this,context);
 
             switch (expression.Type)
             {
@@ -212,7 +206,7 @@ namespace maskx.Expression.Visitors
             }
         }
 
-        public override void Visit(ValueExpression expression)
+        public override void Visit(ValueExpression expression, Dictionary<string, object> context = null)
         {
             Result = expression.Value;
         }
@@ -253,7 +247,7 @@ namespace maskx.Expression.Visitors
             }
         }
 
-        public override void Visit(IdentifierExpression identifierExpression)
+        public override void Visit(IdentifierExpression identifierExpression, Dictionary<string, object> context = null)
         {
             if (GetObjectOrType(identifierExpression.Name, out object o))
             {

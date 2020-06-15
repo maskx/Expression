@@ -18,7 +18,7 @@ namespace maskx.Expression.Visitors
 
         public StringBuilder Result { get; protected set; }
 
-        public override void Visit(TernaryExpression expression)
+        public override void Visit(TernaryExpression expression, Dictionary<string, object> context = null)
         {
             EncapsulateNoValue(expression.LeftExpression);
 
@@ -31,7 +31,7 @@ namespace maskx.Expression.Visitors
             EncapsulateNoValue(expression.RightExpression);
         }
 
-        public override void Visit(BinaryExpression expression)
+        public override void Visit(BinaryExpression expression, Dictionary<string, object> context = null)
         {
             EncapsulateNoValue(expression.LeftExpression);
 
@@ -113,7 +113,7 @@ namespace maskx.Expression.Visitors
             EncapsulateNoValue(expression.RightExpression);
         }
 
-        public override void Visit(UnaryExpression expression)
+        public override void Visit(UnaryExpression expression, Dictionary<string, object> context = null)
         {
             switch (expression.Type)
             {
@@ -133,7 +133,7 @@ namespace maskx.Expression.Visitors
             EncapsulateNoValue(expression.Expression);
         }
 
-        public override void Visit(ValueExpression expression)
+        public override void Visit(ValueExpression expression, Dictionary<string, object> context = null)
         {
             switch (expression.Type)
             {
@@ -174,12 +174,12 @@ namespace maskx.Expression.Visitors
             Result.Append(") ");
         }
 
-        public override void Visit(IdentifierExpression parameter)
+        public override void Visit(IdentifierExpression parameter, Dictionary<string, object> context = null)
         {
             Result.Append("[").Append(parameter.Name).Append("] ");
         }
 
-        protected void EncapsulateNoValue(LogicalExpression expression)
+        protected void EncapsulateNoValue(LogicalExpression expression, Dictionary<string, object> context = null)
         {
             if (expression is ValueExpression)
             {

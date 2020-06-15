@@ -17,7 +17,7 @@ namespace maskx.Expression.Expressions
 
         public override void Accept(LogicalExpressionVisitor visitor, Dictionary<string, object> context = null)
         {
-            visitor.Visit(this);
+            visitor.Visit(this,context);
         }
     }
 
