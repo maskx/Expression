@@ -124,13 +124,19 @@ unaryExpr returns[LogicalExpression retValue]
     | '~' primaryExpr                   { $retValue = new UnaryExpression(UnaryExpressionType.BitwiseNot, $primaryExpr.retValue);}
     | '-' primaryExpr                   { $retValue = new UnaryExpression(UnaryExpressionType.Negate, $primaryExpr.retValue);}
     | primaryExpr                       { $retValue = $primaryExpr.retValue;}
-    | memberExpr                         { $retValue = $memberExpr.retValue;}
+    | memberExpr                        { $retValue = $memberExpr.retValue;}
+    | indexerExpr                       { $retValue = $indexerExpr.retValue;}
     ;
 memberExpr returns[LogicalExpression retValue]
     : left=primaryExpr '.' right=primaryExpr     { $retValue = new MemberExpression($left.retValue,$right.retValue); }   
     | member=memberExpr '.' right=primaryExpr     { $retValue = new MemberExpression($member.retValue,$right.retValue); }   
     ;
-
+indexerExpr returns[LogicalExpression retValue]
+    : leftpp=primaryExpr '[' rightpp=primaryExpr ']' { $retValue = new IndexerExpression($leftpp.retValue,$rightpp.retValue); }  
+    | leftmm=memberExpr '[' rightmm=memberExpr ']' { $retValue = new IndexerExpression($leftmm.retValue,$rightmm.retValue); }  
+    | leftpm=primaryExpr '[' rightpm=memberExpr ']' { $retValue = new IndexerExpression($leftpm.retValue,$rightpm.retValue); }  
+    | leftmp=memberExpr '[' rightmp=primaryExpr ']' { $retValue = new IndexerExpression($leftmp.retValue,$rightmp.retValue); }  
+;
 primaryExpr returns[LogicalExpression retValue] 
     @init { var args = new List<LogicalExpression>(); }
     : '(' expr ')'                      { $retValue = $expr.retValue;}

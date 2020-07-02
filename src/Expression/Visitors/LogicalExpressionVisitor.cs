@@ -18,5 +18,7 @@ namespace maskx.Expression.Visitors
         public abstract void Visit(IdentifierExpression function, Dictionary<string, object> context = null);
 
         public abstract void Visit(MemberExpression property, Dictionary<string, object> context = null);
+
+        public abstract void Visit(IndexerExpression expression, Dictionary<string, object> context = null);
     }
 }

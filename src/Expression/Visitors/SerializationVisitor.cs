@@ -202,5 +202,10 @@ namespace maskx.Expression.Visitors
         {
             throw new System.NotImplementedException();
         }
+
+        public override void Visit(IndexerExpression expression, Dictionary<string, object> context = null)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

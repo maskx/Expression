@@ -89,7 +89,8 @@ namespace ExpressionTest
 
             public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
             {
-                return base.TryGetIndex(binder, indexes, out result);
+                result = indexes[0];
+                return true;
             }
 
             public override bool TryGetMember(GetMemberBinder binder, out object result)
@@ -98,7 +99,62 @@ namespace ExpressionTest
                 return true;
             }
         }
-
+        [Fact(DisplayName = "ShouldSupportArray_Int")]
+        public void ShouldSupportArray_Int()
+        {
+            var expression = new Expression("GetDynamicObject()[1]");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "GetDynamicObject")
+                {
+                    args.Result = new MyDynamicObject();
+                }
+            };
+            Assert.Equal(1, expression.Evaluate());
+        }
+        [Fact(DisplayName = "ShouldSupportArray_String")]
+        public void ShouldSupportArray_String()
+        {
+            var expression = new Expression("GetDynamicObject()['name']");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "GetDynamicObject")
+                {
+                    args.Result = new MyDynamicObject();
+                }
+            };
+            Assert.Equal("name", expression.Evaluate());
+        }
+        [Fact(DisplayName = "ShouldSupportArray_Method")]
+        public void ShouldSupportArray_Method()
+        {
+            var expression = new Expression("GetDynamicObject()[GetIndex()]");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "GetDynamicObject")
+                {
+                    args.Result = new MyDynamicObject();
+                }
+                if(name== "GetIndex")
+                {
+                    args.Result = 1;
+                }
+            };
+            Assert.Equal(1, expression.Evaluate());
+        }
+        [Fact(DisplayName = "ShouldSupportArray_Member")]
+        public void ShouldSupportArray_Member()
+        {
+            var expression = new Expression("GetDynamicObject()[GetDynamicObject().b]");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "GetDynamicObject")
+                {
+                    args.Result = new MyDynamicObject();
+                }
+            };
+            Assert.Equal("b", expression.Evaluate());
+        }
         [Fact(DisplayName = "SouldSupportNamespce")]
         public void SouldSupportNamespce()
         {

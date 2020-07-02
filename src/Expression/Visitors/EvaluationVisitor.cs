@@ -51,23 +51,23 @@ namespace maskx.Expression.Visitors
         public override void Visit(TernaryExpression expression, Dictionary<string, object> context = null)
         {
             // Evaluates the left expression and saves the value
-            expression.LeftExpression.Accept(this,context);
+            expression.LeftExpression.Accept(this, context);
             bool left = Convert.ToBoolean(Result);
 
             if (left)
             {
-                expression.MiddleExpression.Accept(this,context);
+                expression.MiddleExpression.Accept(this, context);
             }
             else
             {
-                expression.RightExpression.Accept(this,context);
+                expression.RightExpression.Accept(this, context);
             }
         }
 
         public override void Visit(BinaryExpression expression, Dictionary<string, object> context = null)
         {
             // Evaluates the left expression and saves the value
-            expression.LeftExpression.Accept(this,context);
+            expression.LeftExpression.Accept(this, context);
             dynamic left = Result;
 
             if (expression.Type == BinaryExpressionType.And && !left)
@@ -83,7 +83,7 @@ namespace maskx.Expression.Visitors
             }
 
             // Evaluates the right expression and saves the value
-            expression.RightExpression.Accept(this,context);
+            expression.RightExpression.Accept(this, context);
             dynamic right = Result;
             try
             {
@@ -188,7 +188,7 @@ namespace maskx.Expression.Visitors
         public override void Visit(UnaryExpression expression, Dictionary<string, object> context = null)
         {
             // Recursively evaluates the underlying expression
-            expression.Expression.Accept(this,context);
+            expression.Expression.Accept(this, context);
 
             switch (expression.Type)
             {
@@ -354,7 +354,7 @@ namespace maskx.Expression.Visitors
                     {
                         var callSiteBinder = Microsoft.CSharp.RuntimeBinder.Binder.GetMember(
                             CSharpBinderFlags.None,
-                            id.Name,
+                             id.Name,
                              objType,
                              new[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) });
                         var callSite = CallSite<Func<CallSite, object, object>>.Create(callSiteBinder);
@@ -374,6 +374,42 @@ namespace maskx.Expression.Visitors
                     }
                 }
             }
+        }
+
+        public override void Visit(IndexerExpression expression, Dictionary<string, object> context = null)
+        {
+            expression.LeftExpression.Accept(this, context);
+            object obj = this.Result;
+            Type objType = this.Result as Type;
+            if (objType == null)
+            {
+                objType = obj.GetType();
+            }
+            else
+            {
+                obj = null;
+            }
+            expression.rightExpression.Accept(this, context);
+            if (objType.IsSubclassOf(typeof(DynamicObject)))
+            {
+                // https://stackoverflow.com/a/19147653
+                var callSiteBinder = Microsoft.CSharp.RuntimeBinder.Binder.GetIndex(
+                    CSharpBinderFlags.None,
+                     objType,
+                     new[] {
+                         CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null),
+                         CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType, null)
+                     });
+                var callSite = CallSite<Func<CallSite, object, object, object>>.Create(callSiteBinder);
+                Result = callSite.Target(callSite, obj, this.Result);
+            }
+            else
+            {
+                // https://stackoverflow.com/a/50904639
+                var prop = objType.GetProperty("Item", new Type[] { this.Result.GetType() });
+                Result = prop.GetValue(obj, new object[] { this.Result });
+            }
+
         }
 
         private bool GetObjectOrType(string uri, out object result)
