@@ -155,6 +155,32 @@ namespace ExpressionTest
             };
             Assert.Equal("b", expression.Evaluate());
         }
+        [Fact(DisplayName = "ShouldSupportArray_DotMethod")]
+        public void ShouldSupportArray_DotMethod()
+        {
+            var expression = new Expression("GetDynamicObject()[123].ToString('00000')");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "GetDynamicObject")
+                {
+                    args.Result = new MyDynamicObject();
+                }
+            };
+            Assert.Equal("00123", expression.Evaluate());
+        }
+        [Fact(DisplayName = "ShouldSupportArray_DotMemeber")]
+        public void ShouldSupportArray_DotMember()
+        {
+            var expression = new Expression("GetDynamicObject()['123'].Length");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "GetDynamicObject")
+                {
+                    args.Result = new MyDynamicObject();
+                }
+            };
+            Assert.Equal(3, expression.Evaluate());
+        }
         [Fact(DisplayName = "SouldSupportNamespce")]
         public void SouldSupportNamespce()
         {
