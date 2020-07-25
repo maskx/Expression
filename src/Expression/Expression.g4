@@ -120,27 +120,21 @@ multExpr returns[LogicalExpression retValue]
     ;
     
 unaryExpr returns[LogicalExpression retValue] 
-    : ('!' | 'not') complexExpr         { $retValue = new UnaryExpression(UnaryExpressionType.Not, $complexExpr.retValue);}
-    | '~' complexExpr                   { $retValue = new UnaryExpression(UnaryExpressionType.BitwiseNot, $complexExpr.retValue);}
-    | '-' complexExpr                   { $retValue = new UnaryExpression(UnaryExpressionType.Negate, $complexExpr.retValue);}
-    | complexExpr                       { $retValue = $complexExpr.retValue;}
-    ;
-complexExpr returns[LogicalExpression retValue]
-    : primaryExpr                       { $retValue = $primaryExpr.retValue;}
-    | memberExpr                        { $retValue = $memberExpr.retValue;}
-    | indexerExpr                       { $retValue = $indexerExpr.retValue;}
-    | memberi=indexerExpr  '.' right=primaryExpr     { $retValue = new MemberExpression($memberi.retValue,$right.retValue); }
-    ;
-indexerExpr returns[LogicalExpression retValue]
-    : leftpp=primaryExpr '[' rightpp=primaryExpr ']' { $retValue = new IndexerExpression($leftpp.retValue,$rightpp.retValue); }  
-    | leftmm=memberExpr '[' rightmm=memberExpr ']' { $retValue = new IndexerExpression($leftmm.retValue,$rightmm.retValue); }  
-    | leftpm=primaryExpr '[' rightpm=memberExpr ']' { $retValue = new IndexerExpression($leftpm.retValue,$rightpm.retValue); }  
-    | leftmp=memberExpr '[' rightmp=primaryExpr ']' { $retValue = new IndexerExpression($leftmp.retValue,$rightmp.retValue); }  
+    : ('!' | 'not') memberExpr         { $retValue = new UnaryExpression(UnaryExpressionType.Not, $memberExpr.retValue);}
+    | '~' memberExpr                   { $retValue = new UnaryExpression(UnaryExpressionType.BitwiseNot, $memberExpr.retValue);}
+    | '-' memberExpr                   { $retValue = new UnaryExpression(UnaryExpressionType.Negate, $memberExpr.retValue);}
+    | memberExpr                       { $retValue = $memberExpr.retValue;}
     ;
 memberExpr returns[LogicalExpression retValue]
-    : left=primaryExpr '.' right=primaryExpr     { $retValue = new MemberExpression($left.retValue,$right.retValue); }   
-    | member=memberExpr '.' right=primaryExpr     { $retValue = new MemberExpression($member.retValue,$right.retValue); }
+    : left=memberExpr '.' right=indexerExpr     { $retValue = new MemberExpression($left.retValue,$right.retValue); }  
+    | indexerExpr                               { $retValue = $indexerExpr.retValue;}
     ;
+
+indexerExpr returns[LogicalExpression retValue]
+    : left=indexerExpr '[' right=expr ']' { $retValue = new IndexerExpression($left.retValue,$right.retValue); }  
+    | primaryExpr                       { $retValue = $primaryExpr.retValue;}
+    ;
+
 primaryExpr returns[LogicalExpression retValue] 
     @init { var args = new List<LogicalExpression>(); }
     : '(' expr ')'                      { $retValue = $expr.retValue;}
@@ -151,7 +145,7 @@ primaryExpr returns[LogicalExpression retValue]
             )*
         ')'                             { $retValue = new FunctionExpression((IdentifierExpression)$id.retValue, args.ToArray());}
     | id                                { $retValue = $id.retValue;}
-    | id '(' ')'                         { $retValue = new FunctionExpression((IdentifierExpression)$id.retValue, args.ToArray());}
+    | id '(' ')'                        { $retValue = new FunctionExpression((IdentifierExpression)$id.retValue, args.ToArray());}
     ;
 
 value returns[LogicalExpression retValue]

@@ -90,12 +90,19 @@ namespace ExpressionTest
             public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
             {
                 result = indexes[0];
+                if (result.ToString()=="{}"){
+                    result = new MyDynamicObject();
+                }
                 return true;
             }
 
             public override bool TryGetMember(GetMemberBinder binder, out object result)
             {
                 result = binder.Name;
+                if (result.ToString() == "MyDynamicObject")
+                {
+                    result = new MyDynamicObject();
+                }
                 return true;
             }
         }
@@ -180,6 +187,32 @@ namespace ExpressionTest
                 }
             };
             Assert.Equal(3, expression.Evaluate());
+        }
+        [Fact(DisplayName = "ShouldSupportArray_DotArray")]
+        public void ShouldSupportArray_DotArray()
+        {
+            var expression = new Expression("GetDynamicObject()['{}'].MyDynamicObject[4]");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "GetDynamicObject")
+                {
+                    args.Result = new MyDynamicObject();
+                }
+            };
+            Assert.Equal(4, expression.Evaluate());
+        }
+        [Fact(DisplayName = "Indexer_Method")]
+        public void Indexer_Method()
+        {
+            var expression = new Expression("GetDynamicObject()['{}'].MyDynamicObject(4)");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "GetDynamicObject")
+                {
+                    args.Result = new MyDynamicObject();
+                }
+            };
+            Assert.Equal(4, expression.Evaluate());
         }
         [Fact(DisplayName = "SouldSupportNamespce")]
         public void SouldSupportNamespce()

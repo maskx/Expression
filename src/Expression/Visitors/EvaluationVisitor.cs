@@ -348,34 +348,76 @@ namespace maskx.Expression.Visitors
                             Result = mInfo.Invoke(obj, null);
                     }
                 }
-                if (expression.rightExpression is IdentifierExpression id)
+                else if (expression.rightExpression is IdentifierExpression id)
                 {
+                   this.Result= GetMemeber(this.Result, id);
+                }
+                else if (expression.rightExpression is IndexerExpression indexer)
+                {
+
+                    obj = GetMemeber(obj, indexer.LeftExpression as IdentifierExpression);
+                    objType = obj.GetType();
+                    indexer.rightExpression.Accept(this);
                     if (objType.IsSubclassOf(typeof(DynamicObject)))
                     {
-                        var callSiteBinder = Microsoft.CSharp.RuntimeBinder.Binder.GetMember(
+                        // https://stackoverflow.com/a/19147653
+                        var callSiteBinder = Microsoft.CSharp.RuntimeBinder.Binder.GetIndex(
                             CSharpBinderFlags.None,
-                             id.Name,
                              objType,
-                             new[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) });
-                        var callSite = CallSite<Func<CallSite, object, object>>.Create(callSiteBinder);
-                        Result = callSite.Target(callSite, obj);
+                             new[] {
+                         CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null),
+                         CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType, null)
+                             });
+                        var callSite = CallSite<Func<CallSite, object, object, object>>.Create(callSiteBinder);
+                        Result = callSite.Target(callSite, obj, this.Result);
                     }
                     else
                     {
-                        var property = objType.GetProperty(id.Name);
-                        if (property != null)
-                            Result = property.GetValue(obj);
-                        else
-                        {
-                            var field = objType.GetField(id.Name);
-                            if (field != null)
-                                Result = field.GetValue(obj);
-                        }
+                        // https://stackoverflow.com/a/50904639
+                        var prop = objType.GetProperty("Item", new Type[] { this.Result.GetType() });
+                        Result = prop.GetValue(obj, new object[] { this.Result });
                     }
                 }
             }
-        }
 
+           
+        }
+        object GetMemeber(object obj, IdentifierExpression id)
+        {
+            object result = null;
+            Type objType = obj as Type;
+            if (objType == null)
+            {
+                objType = obj.GetType();
+            }
+            else
+            {
+                obj = null;
+            }
+            if (objType.IsSubclassOf(typeof(DynamicObject)))
+            {
+                var callSiteBinder = Microsoft.CSharp.RuntimeBinder.Binder.GetMember(
+                    CSharpBinderFlags.None,
+                     id.Name,
+                     objType,
+                     new[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) });
+                var callSite = CallSite<Func<CallSite, object, object>>.Create(callSiteBinder);
+                result = callSite.Target(callSite, obj);
+            }
+            else
+            {
+                var property = objType.GetProperty(id.Name);
+                if (property != null)
+                    result = property.GetValue(obj);
+                else
+                {
+                    var field = objType.GetField(id.Name);
+                    if (field != null)
+                        result = field.GetValue(obj);
+                }
+            }
+            return result;
+        }
         public override void Visit(IndexerExpression expression, Dictionary<string, object> context = null)
         {
             expression.LeftExpression.Accept(this, context);
