@@ -1,5 +1,6 @@
 ﻿using maskx.Expression;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
 using Xunit;
 
 namespace ExpressionTest
@@ -20,7 +21,24 @@ namespace ExpressionTest
             };
             Assert.Equal(1, expression.Evaluate(new Dictionary<string, object>() { { "value", -1 } }));
         }
-
+        [Fact(DisplayName = "IndexerShouldPassContext")]
+        public void IndexerShouldPassContext()
+        {
+            var expression = new Expression("parameters('diskinfo').dataDiskResources[copyIndex()].diskSize");
+            expression.EvaluateFunction = (name, args, cxt) =>
+            {
+                if (name == "parameters")
+                {
+                    args.Result = new { dataDiskResources = new List<object> { new { diskSize = 1 } } };
+                }
+                else if (name == "copyIndex")
+                {
+                    Assert.NotEmpty(cxt);
+                    args.Result = 0;
+                }
+            };
+            Assert.Equal(1, expression.Evaluate(new Dictionary<string, object>() { { "value", -1 } }));
+        }
         [Fact(DisplayName = "ArgsShouldTakeContext")]
         public void ArgsShouldTakeContext()
         {

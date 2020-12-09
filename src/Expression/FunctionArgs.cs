@@ -19,20 +19,14 @@ namespace maskx.Expression
 
         public bool HasResult { get; set; }
 
-        private Expression[] parameters = new Expression[0];
-
-        public Expression[] Parameters
-        {
-            get { return parameters; }
-            set { parameters = value; }
-        }
+        public Expression[] Parameters { get; set; } = new Expression[0];
 
         public object[] EvaluateParameters(Dictionary<string, object> context)
         {
-            var values = new object[parameters.Length];
+            var values = new object[Parameters.Length];
             for (int i = 0; i < values.Length; i++)
             {
-                values[i] = parameters[i].Evaluate(context);
+                values[i] = Parameters[i].Evaluate(context);
             }
 
             return values;

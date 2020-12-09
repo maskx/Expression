@@ -357,7 +357,7 @@ namespace maskx.Expression.Visitors
 
                     obj = GetMemeber(obj, indexer.LeftExpression as IdentifierExpression);
                     objType = obj.GetType();
-                    indexer.rightExpression.Accept(this);
+                    indexer.rightExpression.Accept(this,context);
                     if (objType.IsSubclassOf(typeof(DynamicObject)))
                     {
                         // https://stackoverflow.com/a/19147653
