@@ -11,12 +11,14 @@ namespace ExpressionTest
         [Fact(DisplayName = "CanAccessContext")]
         public void CanAccessContext()
         {
-            var expression = new Expression("Abs()");
-            expression.EvaluateFunction = (name, args, cxt) =>
+            var expression = new Expression("Abs()")
             {
-                if (name == "Abs")
+                EvaluateFunction = (name, args, cxt) =>
                 {
-                    args.Result = System.Math.Abs((int)cxt["value"]);
+                    if (name == "Abs")
+                    {
+                        args.Result = System.Math.Abs((int)cxt["value"]);
+                    }
                 }
             };
             Assert.Equal(1, expression.Evaluate(new Dictionary<string, object>() { { "value", -1 } }));
@@ -24,17 +26,19 @@ namespace ExpressionTest
         [Fact(DisplayName = "IndexerShouldPassContext")]
         public void IndexerShouldPassContext()
         {
-            var expression = new Expression("parameters('diskinfo').dataDiskResources[copyIndex()].diskSize");
-            expression.EvaluateFunction = (name, args, cxt) =>
+            var expression = new Expression("parameters('diskinfo').dataDiskResources[copyIndex()].diskSize")
             {
-                if (name == "parameters")
+                EvaluateFunction = (name, args, cxt) =>
                 {
-                    args.Result = new { dataDiskResources = new List<object> { new { diskSize = 1 } } };
-                }
-                else if (name == "copyIndex")
-                {
-                    Assert.NotEmpty(cxt);
-                    args.Result = 0;
+                    if (name == "parameters")
+                    {
+                        args.Result = new { dataDiskResources = new List<object> { new { diskSize = 1 } } };
+                    }
+                    else if (name == "copyIndex")
+                    {
+                        Assert.NotEmpty(cxt);
+                        args.Result = 0;
+                    }
                 }
             };
             Assert.Equal(1, expression.Evaluate(new Dictionary<string, object>() { { "value", -1 } }));
@@ -42,16 +46,18 @@ namespace ExpressionTest
         [Fact(DisplayName = "ArgsShouldTakeContext")]
         public void ArgsShouldTakeContext()
         {
-            var expression = new Expression("A(B())");
-            expression.EvaluateFunction = (name, args, cxt) =>
+            var expression = new Expression("A(B())")
             {
-                if (name == "A")
+                EvaluateFunction = (name, args, cxt) =>
                 {
-                    args.Result = args.Parameters[0].Evaluate(cxt);
-                }
-                else if (name == "B")
-                {
-                    args.Result = cxt["value"];
+                    if (name == "A")
+                    {
+                        args.Result = args.Parameters[0].Evaluate(cxt);
+                    }
+                    else if (name == "B")
+                    {
+                        args.Result = cxt["value"];
+                    }
                 }
             };
             Assert.Equal(1, expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
@@ -60,12 +66,14 @@ namespace ExpressionTest
         [Fact(DisplayName = "FunctionShouldTakeContextWhenGetReturnObjectProperty")]
         public void FunctionShouldTakeContextWhenGetReturnObjectProperty()
         {
-            var expression = new Expression("A().ToString()");
-            expression.EvaluateFunction = (name, args, cxt) =>
+            var expression = new Expression("A().ToString()")
             {
-                if (name == "A")
+                EvaluateFunction = (name, args, cxt) =>
                 {
-                    args.Result = cxt["value"];
+                    if (name == "A")
+                    {
+                        args.Result = cxt["value"];
+                    }
                 }
             };
             Assert.Equal("1", expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));

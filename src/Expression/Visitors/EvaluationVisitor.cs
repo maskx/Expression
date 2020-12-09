@@ -223,12 +223,14 @@ namespace maskx.Expression.Visitors
             // Evaluating every value could produce unexpected behaviour
             for (int i = 0; i < function.Expressions.Length; i++)
             {
-                args.Parameters[i] = new Expression(function.Expressions[i], _options);
-                // Assign the parameters of the Expression to the arguments so that custom Functions and Parameters can use them
-                args.Parameters[i].Parameters = Parameters;
-                args.Parameters[i].EvaluateFunction = EvaluateFunction;
-                // to support inherit must set EvaluationVisitor = this
-                args.Parameters[i].EvaluationVisitor = this;
+                args.Parameters[i] = new Expression(function.Expressions[i], _options)
+                {
+                    // Assign the parameters of the Expression to the arguments so that custom Functions and Parameters can use them
+                    Parameters = Parameters,
+                    EvaluateFunction = EvaluateFunction,
+                    // to support inherit must set EvaluationVisitor = this
+                    EvaluationVisitor = this
+                };
             }
 
             if (EvaluateFunction != null)
@@ -480,10 +482,9 @@ namespace maskx.Expression.Visitors
 
         private bool GetObjectOrType(string baseUri, MemberExpression memberExpression, out object result, out MemberExpression resultMemeberExpression)
         {
-            string uri = baseUri;
             if (memberExpression.LeftExpression is IdentifierExpression identifierExpression)
             {
-                uri = identifierExpression.Name;
+                string uri = identifierExpression.Name;
                 if (!string.IsNullOrEmpty(baseUri))
                     uri = baseUri + "." + uri;
                 if (GetObjectOrType(uri, out result))

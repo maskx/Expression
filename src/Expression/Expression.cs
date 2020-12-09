@@ -36,11 +36,8 @@ namespace maskx.Expression
 
         public Expression(LogicalExpression expression, EvaluateOptions options)
         {
-            if (expression == null)
-                throw new
+            _ParsedExpression = expression ?? throw new
                     ArgumentException("Expression can't be null", "expression");
-
-            _ParsedExpression = expression;
             Options = options;
         }
 
@@ -209,11 +206,13 @@ namespace maskx.Expression
             {
                 if (_EvaluationVisitor == null)
                 {
-                    _EvaluationVisitor = new EvaluationVisitor(Options);
-                    _EvaluationVisitor.EvaluateFunction = this.EvaluateFunction;
-                    _EvaluationVisitor.Parameters = this.Parameters;
-                    _EvaluationVisitor.TryGetType = this.TryGetType;
-                    _EvaluationVisitor.TryGetObject = this.TryGetObject;
+                    _EvaluationVisitor = new EvaluationVisitor(Options)
+                    {
+                        EvaluateFunction = this.EvaluateFunction,
+                        Parameters = this.Parameters,
+                        TryGetType = this.TryGetType,
+                        TryGetObject = this.TryGetObject
+                    };
                 }
                 return _EvaluationVisitor;
             }
@@ -242,10 +241,10 @@ namespace maskx.Expression
 
                 foreach (object parameter in Parameters.Values)
                 {
-                    if (parameter is IEnumerable)
+                    if (parameter is IEnumerable enumerable)
                     {
                         int localsize = 0;
-                        foreach (object o in (IEnumerable)parameter)
+                        foreach (object o in enumerable)
                         {
                             localsize++;
                         }
@@ -263,8 +262,7 @@ namespace maskx.Expression
 
                 foreach (string key in Parameters.Keys)
                 {
-                    var parameter = Parameters[key] as IEnumerable;
-                    if (parameter != null)
+                    if (Parameters[key] is IEnumerable parameter)
                     {
                         ParameterEnumerators.Add(key, parameter.GetEnumerator());
                     }
