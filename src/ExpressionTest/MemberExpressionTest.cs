@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Text.Json;
 using maskx.Expression;
 using Xunit;
 
@@ -98,7 +99,8 @@ namespace ExpressionTest
             public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
             {
                 result = indexes[0];
-                if (result.ToString()=="{}"){
+                if (result.ToString() == "{}")
+                {
                     result = new MyDynamicObject();
                 }
                 return true;
@@ -312,6 +314,30 @@ namespace ExpressionTest
                 }
             };
             Assert.Equal(1, expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
+        }
+        [Fact(DisplayName = "SupportKeyword")]
+        public void SupportKeyword()
+        {
+            var expression = new Expression("isnull(null)")
+            {
+                EvaluateFunction = (name, args, cxt) =>
+                {
+                    if (name == "isnull")
+                    {
+                        var dd = args.Parameters[0].Evaluate(null);
+                        if ((JsonValueKind)dd == JsonValueKind.Null)
+                            args.Result = 1;
+                    }
+                },
+                TryGetObject = (uri) => { if (uri == "null") return JsonValueKind.Null; return null; }
+            };
+            Assert.Equal(1, expression.Evaluate(new Dictionary<string, object>() { { "value", 1 } }));
+
+            expression = new Expression("null") { TryGetObject = (uri) => { if (uri == "null") return JsonValueKind.Null; return null; } };
+            var d = expression.Evaluate();
+            Assert.IsType<JsonValueKind>(d);
+            Assert.Equal(JsonValueKind.Null, (JsonValueKind)d);
+
         }
     }
 }

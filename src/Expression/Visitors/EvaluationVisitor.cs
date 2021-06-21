@@ -256,8 +256,11 @@ namespace maskx.Expression.Visitors
                 this.Result = o;
                 identifierExpression.IsNamespace = false;
             }
-            this.Result = identifierExpression.Name;
-            identifierExpression.IsNamespace = true;
+            else
+            {
+                this.Result = identifierExpression.Name;
+                identifierExpression.IsNamespace = true;
+            }           
         }
 
         public override void Visit(MemberExpression expression, Dictionary<string, object> context = null)

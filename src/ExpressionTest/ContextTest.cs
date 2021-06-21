@@ -1,6 +1,5 @@
 ﻿using maskx.Expression;
 using System.Collections.Generic;
-using System.Net.NetworkInformation;
 using Xunit;
 
 namespace ExpressionTest
